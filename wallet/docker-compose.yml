@@ -1,0 +1,36 @@
+version: '3'
+
+volumes:
+  prometheus_data: { }
+  grafana_data: { }
+
+services:
+  db:
+    image: postgres:9-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=wallet
+      - POSTGRES_PASSWORD=wallet
+      - POSTGRES_DB=wallet
+    volumes:
+      - ./docker/db/create_role.sql:/docker-entrypoint-initdb.d/create_role.sql
+      - ./docker/db/create_schema.sql/:/docker-entrypoint-initdb.d/create_schema.sql
+
+#  prometheus:
+#    image: prometheus:v2.20.0
+#    volumes:
+#      - ./docker/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#      - prometheus_data:/prometheus/stocks
+#    ports:
+#      - 9120:9090
+
+#  grafana:
+#    image: packages.tools.infra:8444/grafana/grafana/grafana:7.2.0
+#    ports:
+#      - 3010:3000
+#    volumes:
+#      - ./docker/observability/grafana:/etc:grafana/provisioning
+#      - grafana_data:/var/lib/grafana/stocks
+    # restart: always

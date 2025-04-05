@@ -1,0 +1,227 @@
+openapi: "3.0.2"
+info:
+  title: "Wallet API"
+  description: "API for managing digital wallets with credit, debit, and balance retrieval."
+  version: "1.0.0"
+
+paths:
+  /api/v1/wallet/create:
+    post:
+      tags:
+        - Wallet Operations
+      summary: Create a new wallet
+      requestBody:
+        required: true
+        description: Request to create a wallet
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletDto'
+      responses:
+        200:
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletDto'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/wallet/{documentNumber}/balance:
+    get:
+      tags:
+        - Wallet Operations
+      summary: Retrieve wallet balance
+      parameters:
+        - name: documentNumber
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        200:
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceDto'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/wallet/debit:
+    post:
+      tags:
+        - Wallet Transactions
+      summary: Perform a debit transaction
+      requestBody:
+        required: true
+        description: Debit request payload
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitRequestDto'
+      responses:
+        200:
+          description: Debit completed successfully
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/wallet/credit:
+    post:
+      tags:
+        - Wallet Transactions
+      summary: Perform a credit transaction
+      requestBody:
+        required: true
+        description: Credit request payload
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditRequestDto'
+      responses:
+        200:
+          description: Credit completed successfully
+        400:
+          $ref: '#/components/responses/BadRequest'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/wallet/transfer:
+    post:
+      tags:
+        - wallet-controller
+      summary: Transfer an amount between wallets
+      description: Process a credit operation to a client’s wallet
+      operationId: transfer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequestDto'
+        required: true
+      responses:
+        '200':
+          description: Transfer completed successfully
+        '400':
+          description: Invalid transfer request
+          $ref: '#/components/responses/BadRequest'
+
+components:
+  responses:
+    BadRequest:
+      description: 'BAD REQUEST'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExceptionResponseDto'
+    InternalServerError:
+      description: 'INTERNAL SERVER ERROR'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExceptionResponseDto'
+  schemas:
+    WalletDto:
+      type: object
+      required:
+        - client
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientDto'
+        currency:
+          type: string
+        balance:
+          type: number
+          format: decimal
+
+    ClientDto:
+      type: object
+      required:
+        - document_number
+        - name
+        - person_type
+      properties:
+        document_number:
+          type: string
+        name:
+          type: string
+        person_type:
+          type: string
+
+    BalanceDto:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: decimal
+        date:
+          type: string
+          format: date-time
+
+    CreditRequestDto:
+      type: object
+      required:
+        - document_number
+        - amount
+      properties:
+        document_number:
+          type: string
+        amount:
+          type: number
+          format: decimal
+
+    DebitRequestDto:
+      type: object
+      required:
+        - document_number
+        - amount
+      properties:
+        document_number:
+          type: string
+        amount:
+          type: number
+          format: decimal
+
+    TransferRequestDto:
+      type: object
+      required:
+        - senderDocumentNumber
+        - recipientDocumentNumber
+        - amount
+      properties:
+        sender:
+          type: string
+        recipient:
+          type: string
+        amount:
+          type: number
+
+    ExceptionResponseDto:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    ErrorType:
+      type: string
+      enum: [ UNSUPPORTED_METHOD, INVALID_PAYLOAD, UNEXPECTED_ERROR, UNAVAILABLE ]
+
+  securitySchemes:
+    ServiceAuth:
+      type: apiKey
+      name: Authorization
+      in: header
